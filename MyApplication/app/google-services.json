@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "212683334512",
+    "project_id": "mestredaspalavrastheme",
+    "storage_bucket": "mestredaspalavrastheme.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:212683334512:android:ef939baa3ce9776f3325b5",
+        "android_client_info": {
+          "package_name": "com.example.mestredaspalavras"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUQcDqwRX3Cio6SX34xvPsXXl8bR6mtY8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
