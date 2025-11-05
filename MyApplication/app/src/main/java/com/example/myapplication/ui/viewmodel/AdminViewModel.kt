@@ -48,7 +48,31 @@ class AdminViewModel(private val repository: PalavraRepository) : ViewModel() {
         viewModelScope.launch {
             try {
                 repository.addPalavra(palavra)
-                setMensagem("Palavra adicionada")
+                setMensagem("Palavra '$palavra' adicionada e sincronizada.")
+            } catch (e: Exception) {
+                setMensagem("Erro: ${e.message}")
+            }
+        }
+    }
+
+    fun updatePalavra(palavraAntiga: Palavra, palavraNova: String) {
+         if (palavraNova.isBlank()) {
+            setMensagem("Palavra não pode estar em branco")
+            return
+        }
+        if (palavraNova.length != 5) {
+            setMensagem("Palavra deve ter 5 letras")
+            return
+        }
+        if (palavraAntiga.palavra == palavraNova.uppercase()) {
+            setMensagem("A nova palavra é igual à antiga.")
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                repository.updatePalavra(palavraAntiga, palavraNova)
+                setMensagem("Palavra atualizada e sincronizada.")
             } catch (e: Exception) {
                 setMensagem("Erro: ${e.message}")
             }

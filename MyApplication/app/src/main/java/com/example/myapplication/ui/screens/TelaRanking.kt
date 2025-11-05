@@ -21,6 +21,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -67,17 +69,24 @@ fun TelaRanking(
                 }
             } else {
                 itemsIndexed(rankingList) { index, item ->
+                    val color = if (index == 0) Color(0xFFFFD700) else MaterialTheme.colorScheme.onBackground
+                    val fontWeight = if (index == 0) FontWeight.Bold else FontWeight.Normal
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
                             text = "${index + 1}. ${item.nomeJogador}",
-                            style = MaterialTheme.typography.bodyLarge
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = color,
+                            fontWeight = fontWeight
                         )
                         Text(
                             text = "Ganhou na ${item.tentativas}º tentativas",
-                            style = MaterialTheme.typography.bodyLarge
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = color,
+                            fontWeight = fontWeight
                         )
                     }
                 }

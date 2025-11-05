@@ -17,6 +17,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -29,6 +32,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,6 +60,9 @@ fun TelaGerenciarPalavras(
     var novaPalavra by remember { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
 
+    var palavraParaExcluir by remember { mutableStateOf<Palavra?>(null) }
+    var palavraParaEditar by remember { mutableStateOf<Palavra?>(null) }
+
     LaunchedEffect(key1 = true) {
         viewModel.uiState.collectLatest { state ->
             state.mensagem?.let {
@@ -77,6 +84,14 @@ fun TelaGerenciarPalavras(
                             contentDescription = "Voltar"
                         )
                     }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.syncPalavras() }) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Sincronizar com Nuvem"
+                        )
+                    }
                 }
             )
         }
@@ -95,8 +110,9 @@ fun TelaGerenciarPalavras(
                 OutlinedTextField(
                     value = novaPalavra,
                     onValueChange = { novaPalavra = it },
-                    label = { Text("Nova palavra") },
-                    modifier = Modifier.weight(1f)
+                    label = { Text("Nova palavra (5 letras)") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
                 )
                 Button(onClick = {
                     viewModel.addPalavra(novaPalavra)
@@ -110,20 +126,81 @@ fun TelaGerenciarPalavras(
                 items(uiState.palavras) { palavra ->
                     PalavraItem(
                         palavra = palavra,
-                        onDelete = { viewModel.deletePalavra(palavra) }
+                        onEdit = { palavraParaEditar = it },
+                        onDelete = { palavraParaExcluir = it }
                     )
                 }
             }
         }
     }
+
+    palavraParaExcluir?.let { palavra ->
+        AlertDialog(
+            onDismissRequest = { palavraParaExcluir = null },
+            title = { Text("Confirmar Exclusão") },
+            text = { Text("Deseja mesmo excluir a palavra '${palavra.palavra}'? Esta ação não pode ser desfeita.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deletePalavra(palavra)
+                        palavraParaExcluir = null
+                    }
+                ) {
+                    Text("Excluir")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { palavraParaExcluir = null }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    palavraParaEditar?.let { palavra ->
+        var palavraEditada by remember { mutableStateOf(palavra.palavra) }
+        
+        AlertDialog(
+            onDismissRequest = { palavraParaEditar = null },
+            title = { Text("Editar Palavra") },
+            text = {
+                OutlinedTextField(
+                    value = palavraEditada,
+                    onValueChange = { palavraEditada = it },
+                    label = { Text("Palavra (5 letras)") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.updatePalavra(palavra, palavraEditada)
+                        palavraParaEditar = null
+                    }
+                ) {
+                    Text("Salvar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { palavraParaEditar = null }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
 }
 
 @Composable
-fun PalavraItem(palavra: Palavra, onDelete: (Palavra) -> Unit) {
+fun PalavraItem(
+    palavra: Palavra,
+    onEdit: (Palavra) -> Unit,
+    onDelete: (Palavra) -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .clickable { onEdit(palavra) },
         elevation = CardDefaults.cardElevation(2.dp),
         border = BorderStroke(1.dp, Color.LightGray)
     ) {
@@ -141,11 +218,17 @@ fun PalavraItem(palavra: Palavra, onDelete: (Palavra) -> Unit) {
             )
             Spacer(modifier = Modifier.width(16.dp))
             Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = "Editar",
+                modifier = Modifier.clickable { onEdit(palavra) },
+                tint = Color.Gray
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = "Deletar",
-                modifier = Modifier.clickable {
-                    onDelete(palavra)
-                }
+                modifier = Modifier.clickable { onDelete(palavra) },
+                tint = MaterialTheme.colorScheme.error
             )
         }
     }

@@ -50,6 +50,28 @@ class PalavraRepository(private val palavraDao: PalavraDao) {
         }
     }
 
+    suspend fun updatePalavra(palavraAntiga: Palavra, palavraNova: String) {
+        val palavraNovaUpper = palavraNova.uppercase()
+        
+        try {
+            val batch = firestore.batch()
+            val oldDoc = firestoreCollection.document(palavraAntiga.palavra)
+            val newDoc = firestoreCollection.document(palavraNovaUpper)
+            
+            batch.delete(oldDoc)
+            batch.set(newDoc, hashMapOf("palavra" to palavraNovaUpper))
+            batch.commit().await()
+
+            val localWord = palavraDao.getWordByString(palavraAntiga.palavra)
+            localWord?.let {
+                palavraDao.update(it.copy(palavra = palavraNovaUpper))
+            }
+        } catch (e: Exception) {
+             Log.e("PalavraRepository", "Erro ao atualizar palavra", e)
+            throw e
+        }
+    }
+
     suspend fun deletePalavra(palavra: Palavra) {
         val palavraUpper = palavra.palavra.uppercase()
         val doc = firestoreCollection.document(palavraUpper)

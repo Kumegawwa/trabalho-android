@@ -17,6 +17,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+     
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -27,12 +28,12 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+              
+                 "proguard-rules.pro"
             )
         }
     }
 
-    // CORREÇÃO: Alinhando o projeto para usar o Java 17 (jbr-17)
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -41,13 +42,12 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
-    // FIM DA CORREÇÃO
 
-    buildFeatures {
+    buildFeatures 
+    {
         compose = true
     }
     composeOptions {
-        // Versão do compilador correta para Kotlin 1.8.10
         kotlinCompilerExtensionVersion = "1.4.3"
     }
     packaging {
@@ -56,8 +56,6 @@ android {
         }
     }
 }
-
-// O bloco kotlin { jvmToolchain(8) } foi removido.
 
 dependencies {
 
@@ -81,6 +79,7 @@ dependencies {
 
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
     implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-auth-ktx")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

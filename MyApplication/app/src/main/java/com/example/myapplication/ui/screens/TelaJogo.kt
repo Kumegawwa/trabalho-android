@@ -21,10 +21,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,12 +36,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.mestredaspalavras.ui.viewmodel.CorLetra
 import com.example.mestredaspalavras.ui.viewmodel.JogoStatus
 import com.example.mestredaspalavras.ui.viewmodel.JogoViewModel
+import com.example.mestredaspalavras.ui.viewmodel.TentativaComResultado
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,8 +53,19 @@ fun TelaJogo(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var nomeJogador by remember { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(key1 = viewModel) {
+        viewModel.uiState.collectLatest { state ->
+            state.mensagemErro?.let {
+                snackbarHostState.showSnackbar(it)
+                viewModel.clearMensagemErro()
+            }
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Mestre das Palavras") },
@@ -75,7 +91,6 @@ fun TelaJogo(
             Spacer(modifier = Modifier.height(16.dp))
             GradeJogo(
                 tentativas = uiState.tentativas,
-                palavraSecreta = uiState.palavraSecreta,
                 maxTentativas = uiState.maxTentativas,
                 tamanhoPalavra = uiState.tamanhoPalavra
             )
@@ -88,7 +103,8 @@ fun TelaJogo(
                         onValueChange = { nomeJogador = it },
                         label = { Text("Seu nome (para o ranking)") },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = uiState.mensagemErro?.contains("nome") == true
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
@@ -97,7 +113,8 @@ fun TelaJogo(
                     onValueChange = viewModel::onTentativaChange,
                     label = { Text("Sua tentativa") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = uiState.mensagemErro != null && uiState.mensagemErro?.contains("nome") == false
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
@@ -125,8 +142,7 @@ fun TelaJogo(
 
 @Composable
 private fun GradeJogo(
-    tentativas: List<String>,
-    palavraSecreta: String,
+    tentativas: List<TentativaComResultado>,
     maxTentativas: Int,
     tamanhoPalavra: Int
 ) {
@@ -135,7 +151,6 @@ private fun GradeJogo(
             val tentativa = tentativas.getOrNull(index)
             LinhaTentativa(
                 tentativa = tentativa,
-                palavraSecreta = palavraSecreta,
                 tamanhoPalavra = tamanhoPalavra
             )
         }
@@ -144,18 +159,19 @@ private fun GradeJogo(
 
 @Composable
 private fun LinhaTentativa(
-    tentativa: String?,
-    palavraSecreta: String,
+    tentativa: TentativaComResultado?,
     tamanhoPalavra: Int
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         repeat(tamanhoPalavra) { index ->
-            val char = tentativa?.getOrNull(index)
-            val cor = when {
-                char == null -> Color.LightGray.copy(alpha = 0.3f)
-                char == palavraSecreta.getOrNull(index) -> Color(0xFF4CAF50)
-                palavraSecreta.contains(char) -> Color(0xFFFFEB3B)
-                else -> Color.Gray
+            val char = tentativa?.palavra?.getOrNull(index)
+            val corLetra = tentativa?.cores?.getOrNull(index) ?: CorLetra.VAZIA
+            
+            val cor = when (corLetra) {
+                CorLetra.VAZIA -> Color.LightGray.copy(alpha = 0.3f)
+                CorLetra.CORRETA -> Color(0xFF4CAF50)
+                CorLetra.LUGAR_ERRADO -> Color(0xFFFFEB3B)
+                CorLetra.INCORRETA -> Color.Gray
             }
             CaixaLetra(char = char, color = cor)
         }
